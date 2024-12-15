@@ -6,11 +6,11 @@ pub enum Type {
 }
 
 pub struct DataPacket {
-    tag: String,
-    data_type: Type,
-    timestamp: f64,
-    logger_timestamp: f64,
-    hostname: String,
+    pub tag: String,
+    pub data_type: Type,
+    pub timestamp: f64,
+    pub logger_timestamp: f64,
+    pub hostname: String,
 }
 impl DataPacket {
     pub fn new(
@@ -31,14 +31,14 @@ impl DataPacket {
 }
 
 pub struct LaserParameters {
-    laser_pose: na::Isometry2<f64>,
-    laser_type: i32,
-    num_beams: i32,
-    first_beam_theta: f64,
-    angular_step: f64,
-    max_range: f64,
-    accuracy: f64,
-    remission_mode: i32,
+    pub laser_pose: na::Isometry2<f64>,
+    pub laser_type: i32,
+    pub num_beams: i32,
+    pub first_beam_theta: f64,
+    pub angular_step: f64,
+    pub max_range: f64,
+    pub accuracy: f64,
+    pub remission_mode: i32,
 }
 
 impl LaserParameters {
@@ -67,13 +67,18 @@ impl LaserParameters {
     pub fn beam_angle(&self, index: i32) -> f64 {
         self.first_beam_theta + index as f64 * self.angular_step
     }
+
+    pub fn beam_isometry(&self, index: i32) -> na::Isometry2<f64> {
+        let theta = self.beam_angle(index);
+        na::Isometry2::new(na::Vector2::zeros(), theta)
+    }
 }
 
 pub struct RobotLaser {
-    data_packet: DataPacket,
-    laser_params: LaserParameters,
-    odom_pose: na::Isometry2<f64>,
-    ranges: Vec<f32>,
+    pub data_packet: DataPacket,
+    pub laser_params: LaserParameters,
+    pub odom_pose: na::Isometry2<f64>,
+    pub ranges: Vec<f32>,
 }
 impl RobotLaser {
     pub fn new(
@@ -89,7 +94,30 @@ impl RobotLaser {
             ranges,
         }
     }
+
     pub fn laser_pose(&self) -> na::Isometry2<f64> {
         self.odom_pose * self.laser_params.laser_pose
+    }
+
+    pub fn crop(&mut self, max_distance: f32, min_distance: f32) {
+        for range in &mut self.ranges {
+            *range = range.min(max_distance).max(min_distance);
+        }
+    }
+
+    pub fn cartesian(&self) -> Vec<na::Vector2<f64>> {
+        let mut coords = Vec::new();
+
+        let max_range = self.laser_params.max_range as f32;
+        // compute the cartesian coords
+        for i in 0..self.ranges.len() {
+            let range = self.ranges[i];
+            if range >= max_range {
+                continue;
+            }
+            let p = na::Vector2::new(range as f64, 0.0);
+            coords.push(self.laser_params.beam_isometry(i as i32) * p);
+        }
+        coords
     }
 }
