@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-struct GridMap<T> {
+pub struct GridMap<T> {
     pub resolution: f64,
     pub offset: na::Vector2<f64>,
     pub size: na::Vector2<usize>,

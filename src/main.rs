@@ -4,6 +4,7 @@ mod datastream;
 use datastream::{parser::Parser, parser_carmen::CarmenFile};
 mod rendering;
 use rendering::boundaries::boundaries;
+use rendering::frequencymap::FrequencyMap;
 
 fn main() {
     let carmen_file = CarmenFile {
