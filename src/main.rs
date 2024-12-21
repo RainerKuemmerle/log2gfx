@@ -3,8 +3,8 @@ extern crate nalgebra as na;
 mod datastream;
 use datastream::{parser::Parser, parser_carmen::CarmenFile};
 mod rendering;
-use rendering::boundaries::boundaries;
-use rendering::frequencymap::FrequencyMap;
+use rendering::map_creator::{self, MapCreator};
+use rendering::map_creator_parameter::{self, MapCreatorParameter};
 
 fn main() {
     let carmen_file = CarmenFile {
@@ -13,13 +13,10 @@ fn main() {
     let data = carmen_file.parse();
     println!("Number of laser readings: {}", data.len());
 
-    let offset = na::Isometry2::identity();
-    let mut boundary_min = na::Vector2::new(1e200, 1e200);
-    let mut boundary_max = -boundary_min;
+    let map_creator_parameter = MapCreatorParameter::default();
+    let mut map_creator = MapCreator::new(map_creator_parameter);
 
-    for scan in data {
-        boundaries(&mut boundary_min, &mut boundary_max, &offset, &scan, -1.)
-    }
-    println!("Boundary min: {}", boundary_min);
-    println!("Boundary max: {}", boundary_max);
+    map_creator.update_boundaries(&data);
+    println!("Boundary min: {}", map_creator.boundaries_min);
+    println!("Boundary max: {}", map_creator.boundaries_max);
 }
