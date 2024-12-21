@@ -40,6 +40,7 @@ fn read_robotlaser(line: &String) -> robot_data::RobotLaser {
     }
 
     let num_remissions: i32 = tokens.next().unwrap().parse().unwrap();
+    // TODO(Rainer): Use advance_by later
     for _ in 0..num_remissions {
         tokens.next();
     }
@@ -67,6 +68,7 @@ fn read_robotlaser(line: &String) -> robot_data::RobotLaser {
         remission_mode,
     );
 
+    // TODO(Rainer): Use advance_by later
     for _ in 0..5 {
         tokens.next();
     }

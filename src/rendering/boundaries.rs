@@ -17,8 +17,8 @@ pub fn boundaries(
     max.x = max.x.max(ropot_pose.x);
     max.y = max.y.max(ropot_pose.y);
     let max_range = scan.laser_params.max_range as f32;
-    for i in 0..scan.ranges.len() {
-        let mut r = scan.ranges[i];
+    for (i,range) in scan.ranges.iter().enumerate() {
+        let mut r = *range;
         if r >= max_range {
             continue;
         }
@@ -26,7 +26,7 @@ pub fn boundaries(
             r = usable_range;
         }
         let point = na::Vector2::new(r as f64, 0.);
-        let transformed_point = tp * scan.laser_params.beam_isometry(i as i32) * point;
+        let transformed_point = tp * scan.laser_params.beam_isometry(i) * point;
         min.x = min.x.min(transformed_point.x);
         min.y = min.y.min(transformed_point.y);
         max.x = max.x.max(transformed_point.x);
