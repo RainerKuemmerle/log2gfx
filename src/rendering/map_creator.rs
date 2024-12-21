@@ -46,4 +46,69 @@ impl MapCreator {
             );
         }
     }
+
+    pub fn integrate_scans(&mut self, scans: &Vec<RobotLaser>) {
+        if self.fmap.is_none() {
+            panic!("Called integrate_scans with an allocated map");
+        }
+
+        let map = self.fmap.as_mut().unwrap();
+
+        if self.parameter.verbose {
+            print!("Integrating scans ... ");
+        }
+        for rl in scans.iter() {
+            let my_max_range = self.parameter.max_range.min(rl.laser_params.max_range);
+            let my_usable_range = self
+                .parameter
+                .max_usable_range
+                .min(rl.laser_params.max_range);
+
+            map.integrate_scan(
+                rl,
+                self.parameter.offset * rl.odom_pose,
+                Some(my_max_range),
+                Some(my_usable_range),
+                None,
+            );
+        }
+        if self.parameter.verbose {
+            println!("done.");
+        }
+    }
+
+    pub fn allocate_map(&mut self) {
+        if self.parameter.verbose {
+            println!(
+                "Boundaries: {} {} -> {} {}",
+                self.boundaries_min.x,
+                self.boundaries_min.y,
+                self.boundaries_max.x,
+                self.boundaries_max.y
+            );
+        }
+        let border = na::Vector2::new(self.parameter.border, self.parameter.border);
+        let boundaries_min = self.boundaries_min - border;
+        let boundaries_max = self.boundaries_max + border;
+        if self.parameter.verbose {
+            println!(
+                "Extended Boundaries: {} {} -> {} {}",
+                boundaries_min.x, boundaries_min.y, boundaries_max.x, boundaries_max.y
+            );
+        }
+
+        let dsize = boundaries_max - boundaries_min;
+        let isize = (dsize / self.parameter.resolution)
+            .try_cast::<usize>()
+            .unwrap();
+
+        if self.parameter.verbose {
+            println!("Allocating map size {} x {}", isize.x, isize.y)
+        }
+        self.fmap = Some(FrequencyMap::new(
+            isize,
+            self.parameter.resolution,
+            boundaries_min,
+        ));
+    }
 }

@@ -23,16 +23,16 @@ impl<T: Copy> GridMap<T> {
         }
     }
 
-    pub fn cell_scalar(&mut self, x: usize, y: usize) -> Option<&mut T> {
-        self.grid.get_mut(y * self.size.x + x)
+    pub fn cell_scalar(&mut self, x: i32, y: i32) -> Option<&mut T> {
+        if !self.is_inside_scalar(x, y) {
+            None
+        } else {
+            self.grid.get_mut(y as usize * self.size.x + x as usize)
+        }
     }
 
     pub fn cell(&mut self, p: &na::Vector2<i32>) -> Option<&mut T> {
-        if p.x < 0 || p.y < 0 {
-            None
-        } else {
-            self.cell_scalar(p.x as usize, p.y as usize)
-        }
+        self.cell_scalar(p.x, p.y)
     }
 
     pub fn world2map(&self, wp: &na::Vector2<f64>) -> na::Vector2<i32> {
@@ -46,5 +46,9 @@ impl<T: Copy> GridMap<T> {
 
     pub fn is_inside(&self, mp: &na::Vector2<i32>) -> bool {
         mp.x > 0 && mp.y > 0 && (mp.x as usize) < self.size.x && (mp.y as usize) < self.size.y
+    }
+
+    pub fn is_inside_scalar(&self, x: i32, y: i32) -> bool {
+        x > 0 && y > 0 && (x as usize) < self.size.x && (y as usize) < self.size.y
     }
 }

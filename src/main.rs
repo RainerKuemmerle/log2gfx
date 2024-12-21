@@ -13,10 +13,14 @@ fn main() {
     let data = carmen_file.parse();
     println!("Number of laser readings: {}", data.len());
 
-    let map_creator_parameter = MapCreatorParameter::default();
+    let mut map_creator_parameter = MapCreatorParameter::default();
+    map_creator_parameter.verbose = true;
     let mut map_creator = MapCreator::new(map_creator_parameter);
 
     map_creator.update_boundaries(&data);
     println!("Boundary min: {}", map_creator.boundaries_min);
     println!("Boundary max: {}", map_creator.boundaries_max);
+
+    map_creator.allocate_map();
+    map_creator.integrate_scans(&data);
 }
