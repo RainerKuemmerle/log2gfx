@@ -3,18 +3,18 @@ extern crate nalgebra as na;
 pub struct GridMap<T> {
     pub resolution: f64,
     pub offset: na::Vector2<f64>,
-    pub size: na::Vector2<usize>,
+    pub size: [usize; 2],
     grid: Vec<T>,
 }
 
 impl<T: Copy> GridMap<T> {
     pub fn new(
-        size: na::Vector2<usize>,
+        size: [usize; 2],
         resolution: f64,
         offset: na::Vector2<f64>,
         unknown_cell: T,
     ) -> Self {
-        let grid = vec![unknown_cell; size.x * size.y];
+        let grid = vec![unknown_cell; size[0] * size[1]];
         Self {
             resolution,
             offset,
@@ -31,16 +31,20 @@ impl<T: Copy> GridMap<T> {
         self.grid.iter_mut()
     }
 
-    pub fn cell_scalar(&mut self, x: i32, y: i32) -> Option<&mut T> {
-        if !self.is_inside_scalar(x, y) {
+    pub fn cell_mut(&mut self, x: i32, y: i32) -> Option<&mut T> {
+        if !self.is_inside(x, y) {
             None
         } else {
-            self.grid.get_mut(y as usize * self.size.x + x as usize)
+            self.grid.get_mut(y as usize * self.size[0] + x as usize)
         }
     }
 
-    pub fn cell(&mut self, p: &na::Vector2<i32>) -> Option<&mut T> {
-        self.cell_scalar(p.x, p.y)
+    pub fn cell(&self, x: i32, y: i32) -> Option<&T> {
+        if !self.is_inside(x, y) {
+            None
+        } else {
+            self.grid.get(y as usize * self.size[0] + x as usize)
+        }
     }
 
     pub fn world2map(&self, wp: &na::Vector2<f64>) -> na::Vector2<i32> {
@@ -52,11 +56,7 @@ impl<T: Copy> GridMap<T> {
         self.offset + ((mp.cast::<f64>() + na::Vector2::new(0.5, 0.5)) * self.resolution)
     }
 
-    pub fn is_inside(&self, mp: &na::Vector2<i32>) -> bool {
-        mp.x > 0 && mp.y > 0 && (mp.x as usize) < self.size.x && (mp.y as usize) < self.size.y
-    }
-
-    pub fn is_inside_scalar(&self, x: i32, y: i32) -> bool {
-        x > 0 && y > 0 && (x as usize) < self.size.x && (y as usize) < self.size.y
+    pub fn is_inside(&self, x: i32, y: i32) -> bool {
+        x > 0 && y > 0 && (x as usize) < self.size[0] && (y as usize) < self.size[1]
     }
 }

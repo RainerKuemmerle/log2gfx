@@ -8,38 +8,34 @@ use crate::datastream::robot_data::RobotLaser;
 use super::{floatmap::FloatMap, gridmap};
 
 fn bresenham(x1: i32, y1: i32, x2: i32, y2: i32) -> Vec<[i32; 2]> {
-    fn bresenham_core(x1: i32, y1: i32, x2: i32, y2: i32) -> Vec<[i32; 2]> {
-        let mut points = vec![];
-        let dx = x2 - x1;
-        let dy = y2 - y1;
-        let mut x = x1;
-        let mut y = y1;
-        let mut error = dx / 2;
-        while x <= x2 {
-            points.push([x, y]);
-            x += 1;
-            error -= dy;
-            if error < 0 {
-                y += 1;
-                error += dx;
-            }
-        }
-        return points;
-    }
-    if x2 < x1 {
-        let mut reversed = bresenham_core(x2, y2, x1, y1);
-        reversed.reverse();
-        return reversed;
-    }
-    if (y2 - y1).abs() > (x2 - x1).abs() {
-        let mut swapped = bresenham_core(y1, x1, y2, x2);
-        for point in swapped.iter_mut() {
-            point.swap(0, 1);
-        }
-        return swapped;
-    }
+    let mut coordinates = vec![];
+    let dx: i32 = i32::abs(x2 - x1);
+    let dy: i32 = i32::abs(y2 - y1);
+    let sx: i32 = if x1 < x2 { 1 } else { -1 };
+    let sy: i32 = if y1 < y2 { 1 } else { -1 };
 
-    return bresenham_core(x1, y1, x2, y1);
+    let mut error: i32 = (if dx > dy { dx } else { -dy }) / 2;
+    let mut current_x: i32 = x1;
+    let mut current_y: i32 = y1;
+    loop {
+        coordinates.push([current_x, current_y]);
+
+        if current_x == x2 && current_y == y2 {
+            break;
+        }
+
+        let error2: i32 = error;
+
+        if error2 > -dx {
+            error -= dy;
+            current_x += sx;
+        }
+        if error2 < dy {
+            error += dx;
+            current_y += sy;
+        }
+    }
+    coordinates
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -53,7 +49,7 @@ pub struct FrequencyMap {
 }
 
 impl FrequencyMap {
-    pub fn new(size: na::Vector2<usize>, resolution: f64, offset: na::Vector2<f64>) -> Self {
+    pub fn new(size: [usize; 2], resolution: f64, offset: na::Vector2<f64>) -> Self {
         let default_cell = FrequencyMapCell { hits: 0, misses: 0 };
         let map = gridmap::GridMap::new(size, resolution, offset, default_cell);
         Self { map }
@@ -85,24 +81,24 @@ impl FrequencyMap {
                 r = my_usable_range;
                 cropped = true;
             }
-            let beam = na::Vector2::new(r as f64, 0.);
+            let beam = na::Point2::new(r as f64, 0.);
             let beam_end_point = laser_pose * laser.laser_params.beam_isometry(i) * beam;
-            let end = self.map.world2map(&beam_end_point);
+            let end = self.map.world2map(&beam_end_point.coords);
 
-            let line = bresenham(start.x, end.x, start.y, end.y);
+            let line = bresenham(start.x, start.y, end.x, end.y);
             for point in line.iter() {
-                match self.map.cell_scalar(point[0], point[1]) {
-                    None => continue,
+                match self.map.cell_mut(point[0], point[1]) {
                     Some(c) => c.misses += gain.unwrap_or(1),
+                    None => continue,
                 }
             }
-            if !self.map.is_inside_scalar(end.x, end.y) {
+            if !self.map.is_inside(end.x, end.y) {
                 continue;
             }
             if !cropped {
-                match self.map.cell_scalar(end[0], end[1]) {
-                    None => continue,
+                match self.map.cell_mut(end[0], end[1]) {
                     Some(c) => c.hits += gain.unwrap_or(1),
+                    None => continue,
                 }
             }
         }

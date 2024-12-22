@@ -20,19 +20,23 @@ impl FloatMap {
             "# offset {} {}",
             self.map.offset.x, self.map.offset.y
         )?;
-        writeln!(writer, "{} {} 255", self.map.size.x, self.map.size.y)?;
+        writeln!(writer, "{} {} 255", self.map.size[0], self.map.size[1])?;
 
         // Write the image content
-        for occ in self.map.cells() {
-            let c = 255. - 255. * occ;
-            let rgb: [u8; 3];
-            match occ {
-                -1. => rgb = [210, 190, 190],
-                -2. => rgb = [64, 64, 255],
-                -3. => rgb = [255, 64, 64],
-                &_ => rgb = [c as u8; 3],
+        let default_cell = -1.0f32;
+        for i in 1..=self.map.size[1] {
+            let y = self.map.size[1] - i;
+            for x in 0..self.map.size[0] {
+                let occ = self.map.cell(x as i32, y as i32).unwrap_or(&default_cell);
+                let c = 255. - 255. * occ;
+                let rgb: [u8; 3];
+                match occ {
+                    -1. => rgb = [140, 170, 238],
+                    -2. => rgb = [231, 130, 132],
+                    _ => rgb = [c as u8; 3],
+                }
+                writer.write(&rgb)?;
             }
-            writer.write(&rgb)?;
         }
 
         Ok(())

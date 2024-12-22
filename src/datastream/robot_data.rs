@@ -99,13 +99,7 @@ impl RobotLaser {
         self.odom_pose * self.laser_params.laser_pose
     }
 
-    pub fn crop(&mut self, max_distance: f32, min_distance: f32) {
-        for range in &mut self.ranges {
-            *range = range.min(max_distance).max(min_distance);
-        }
-    }
-
-    pub fn cartesian(&self) -> Vec<na::Vector2<f64>> {
+    pub fn cartesian(&self) -> Vec<na::Point2<f64>> {
         let mut coords = Vec::new();
 
         let max_range = self.laser_params.max_range as f32;
@@ -114,7 +108,7 @@ impl RobotLaser {
             if *range >= max_range {
                 continue;
             }
-            let p = na::Vector2::new(*range as f64, 0.0);
+            let p = na::Point2::new(*range as f64, 0.0);
             coords.push(self.laser_params.beam_isometry(i) * p);
         }
         coords

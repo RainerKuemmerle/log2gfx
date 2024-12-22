@@ -5,8 +5,8 @@ use core::f64;
 use crate::datastream::robot_data::RobotLaser;
 
 use super::boundaries::boundaries;
-use super::frequencymap::{self, FrequencyMap};
-use super::map_creator_parameter::{self, MapCreatorParameter};
+use super::frequencymap::FrequencyMap;
+use super::map_creator_parameter::MapCreatorParameter;
 
 pub struct MapCreator {
     pub parameter: MapCreatorParameter,
@@ -106,7 +106,7 @@ impl MapCreator {
             println!("Allocating map size {} x {}", isize.x, isize.y)
         }
         self.fmap = Some(FrequencyMap::new(
-            isize,
+            [isize.x, isize.y],
             self.parameter.resolution,
             boundaries_min,
         ));

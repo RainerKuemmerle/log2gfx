@@ -18,13 +18,10 @@ fn main() {
     let mut map_creator = MapCreator::new(map_creator_parameter);
 
     map_creator.update_boundaries(&data);
-    println!("Boundary min: {}", map_creator.boundaries_min);
-    println!("Boundary max: {}", map_creator.boundaries_max);
-
     map_creator.allocate_map();
     map_creator.integrate_scans(&data);
 
     let fmap = map_creator.fmap.as_ref().unwrap();
     let occupancy_map = fmap.compute_occupancy_map();
-    let result = occupancy_map.save_as_ppm("/tmp/log2gfx.ppm");
+    let _result = occupancy_map.save_as_ppm("/tmp/log2gfx.ppm");
 }
