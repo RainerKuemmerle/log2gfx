@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 pub enum Type {
-    Unknown,
+    // Unknown,
     RobotLaser,
 }
 
@@ -33,7 +33,6 @@ impl DataPacket {
 pub struct LaserParameters {
     pub laser_pose: na::Isometry2<f64>,
     pub laser_type: i32,
-    pub num_beams: i32,
     pub first_beam_theta: f64,
     pub angular_step: f64,
     pub max_range: f64,
@@ -45,7 +44,6 @@ impl LaserParameters {
     pub fn new(
         laser_pose: na::Isometry2<f64>,
         laser_type: i32,
-        num_beams: i32,
         first_beam_theta: f64,
         angular_step: f64,
         max_range: f64,
@@ -55,7 +53,6 @@ impl LaserParameters {
         Self {
             laser_pose,
             laser_type,
-            num_beams,
             first_beam_theta,
             angular_step,
             max_range,

@@ -25,7 +25,7 @@ impl MapCreator {
         }
     }
 
-    pub fn update_boundaries(&mut self, scans: &Vec<RobotLaser>) {
+    pub fn update_boundaries(&mut self, scans: &[RobotLaser]) {
         for rl in scans.iter() {
             if self.parameter.zero_first_pose {
                 self.parameter.zero_first_pose = false;
@@ -40,14 +40,14 @@ impl MapCreator {
                 &mut self.boundaries_min,
                 &mut self.boundaries_max,
                 &self.parameter.offset,
-                &rl,
+                rl,
                 Some(my_max_range as f32),
                 Some(my_usable_range as f32),
             );
         }
     }
 
-    pub fn integrate_scans(&mut self, scans: &Vec<RobotLaser>) {
+    pub fn integrate_scans(&mut self, scans: &[RobotLaser]) {
         if self.fmap.is_none() {
             panic!("Called integrate_scans without an allocated map");
         }

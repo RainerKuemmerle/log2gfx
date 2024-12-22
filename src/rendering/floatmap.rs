@@ -30,13 +30,12 @@ impl FloatMap {
             for x in 0..self.map.size[0] {
                 let occ = self.map.cell(x as i32, y as i32).unwrap_or(&default_cell);
                 let c = 255. - 255. * occ;
-                let rgb: [u8; 3];
-                match occ {
-                    -1. => rgb = [140, 170, 238],
-                    -2. => rgb = [231, 130, 132],
-                    _ => rgb = [c as u8; 3],
-                }
-                writer.write(&rgb)?;
+                let rgb: [u8; 3] = match occ {
+                    -1. => [140, 170, 238],
+                    -2. => [231, 130, 132],
+                    _ => [c as u8; 3],
+                };
+                writer.write_all(&rgb)?;
             }
         }
 
