@@ -21,14 +21,14 @@ where
 
 fn read_robotlaser(line: &str) -> robot_data::RobotLaser {
     let mut tokens = line.split_whitespace();
-    let tag = tokens.next().unwrap();
-    let laser_type: i32 = tokens.next().unwrap().parse().unwrap();
+    let _tag = tokens.next().unwrap();
+    let _laser_type: i32 = tokens.next().unwrap().parse().unwrap();
     let angle: f64 = tokens.next().unwrap().parse().unwrap();
     let _fov: f64 = tokens.next().unwrap().parse().unwrap();
     let angular_step: f64 = tokens.next().unwrap().parse().unwrap();
     let max_range: f64 = tokens.next().unwrap().parse().unwrap();
-    let accuracy: f64 = tokens.next().unwrap().parse().unwrap();
-    let remission_mode: i32 = tokens.next().unwrap().parse().unwrap();
+    let _accuracy: f64 = tokens.next().unwrap().parse().unwrap();
+    let _remission_mode: i32 = tokens.next().unwrap().parse().unwrap();
 
     // parsing the beams
     let num_beams: i32 = tokens.next().unwrap().parse().unwrap();
@@ -56,33 +56,10 @@ fn read_robotlaser(line: &str) -> robot_data::RobotLaser {
 
     // Relative laser pose and the parameters finally
     let laser_pose_relative = robot_pose_global.inverse() * laser_pose_global;
-    let laser_params = robot_data::LaserParameters::new(
-        laser_pose_relative,
-        laser_type,
-        angle,
-        angular_step,
-        max_range,
-        accuracy,
-        remission_mode,
-    );
+    let laser_params =
+        robot_data::LaserParameters::new(laser_pose_relative, angle, angular_step, max_range);
 
-    // TODO(Rainer): Use advance_by later
-    for _ in 0..5 {
-        tokens.next();
-    }
-    let timestamp: f64 = tokens.next().unwrap().parse().unwrap();
-    let hostname = tokens.next().unwrap();
-    let logger_timestamp: f64 = tokens.next().unwrap().parse().unwrap();
-
-    let data_packet = robot_data::DataPacket::new(
-        String::from(tag),
-        robot_data::Type::RobotLaser,
-        timestamp,
-        logger_timestamp,
-        String::from(hostname),
-    );
-
-    robot_data::RobotLaser::new(data_packet, laser_params, robot_pose_global, ranges)
+    robot_data::RobotLaser::new(laser_params, robot_pose_global, ranges)
 }
 
 impl parser::Parser for CarmenFile {
