@@ -2,13 +2,13 @@ extern crate nalgebra as na;
 
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use super::parser;
 use super::robot_data;
 
 pub struct CarmenFile {
-    pub filename: String,
+    pub filename: PathBuf,
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

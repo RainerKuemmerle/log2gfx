@@ -1,6 +1,7 @@
 use super::gridmap;
 
 use std::io::Write;
+use std::path::PathBuf;
 use std::{fs::File, io::BufWriter};
 
 pub struct FloatMap {
@@ -8,7 +9,7 @@ pub struct FloatMap {
 }
 
 impl FloatMap {
-    pub fn save_as_ppm(&self, filename: &str) -> std::io::Result<()> {
+    pub fn save_as_ppm(&self, filename: &PathBuf) -> std::io::Result<()> {
         let file = File::create(filename)?;
         let mut writer = BufWriter::new(file);
 
