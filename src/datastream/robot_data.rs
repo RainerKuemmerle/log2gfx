@@ -98,19 +98,4 @@ impl RobotLaser {
     pub fn laser_pose(&self) -> na::Isometry2<f64> {
         self.odom_pose * self.laser_params.laser_pose
     }
-
-    pub fn cartesian(&self) -> Vec<na::Point2<f64>> {
-        let mut coords = Vec::new();
-
-        let max_range = self.laser_params.max_range as f32;
-        // compute the cartesian coords
-        for (i, range) in self.ranges.iter().enumerate() {
-            if *range >= max_range {
-                continue;
-            }
-            let p = na::Point2::new(*range as f64, 0.0);
-            coords.push(self.laser_params.beam_isometry(i) * p);
-        }
-        coords
-    }
 }
