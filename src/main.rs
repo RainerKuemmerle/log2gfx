@@ -23,5 +23,6 @@ fn main() {
 
     let fmap = map_creator.fmap.as_ref().unwrap();
     let occupancy_map = fmap.compute_occupancy_map();
+
     let _result = occupancy_map.save_as_ppm("/tmp/log2gfx.ppm");
 }

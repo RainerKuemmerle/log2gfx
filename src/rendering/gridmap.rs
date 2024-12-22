@@ -52,10 +52,6 @@ impl<T: Copy> GridMap<T> {
         na::Vector2::new(map_point.x as i32, map_point.y as i32)
     }
 
-    pub fn map2world(&self, mp: &na::Vector2<i32>) -> na::Vector2<f64> {
-        self.offset + ((mp.cast::<f64>() + na::Vector2::new(0.5, 0.5)) * self.resolution)
-    }
-
     pub fn is_inside(&self, x: i32, y: i32) -> bool {
         x > 0 && y > 0 && (x as usize) < self.size[0] && (y as usize) < self.size[1]
     }
