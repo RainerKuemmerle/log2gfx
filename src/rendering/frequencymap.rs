@@ -1,10 +1,11 @@
 extern crate nalgebra as na;
 
 use core::f32;
+use std::iter::zip;
 
 use crate::datastream::robot_data::RobotLaser;
 
-use super::gridmap;
+use super::{floatmap::FloatMap, gridmap};
 
 fn bresenham(x1: i32, y1: i32, x2: i32, y2: i32) -> Vec<[i32; 2]> {
     fn bresenham_core(x1: i32, y1: i32, x2: i32, y2: i32) -> Vec<[i32; 2]> {
@@ -42,13 +43,13 @@ fn bresenham(x1: i32, y1: i32, x2: i32, y2: i32) -> Vec<[i32; 2]> {
 }
 
 #[derive(Debug, Copy, Clone)]
-struct FrequencyMapCell {
+pub struct FrequencyMapCell {
     hits: i32,
     misses: i32,
 }
 
 pub struct FrequencyMap {
-    map: gridmap::GridMap<FrequencyMapCell>,
+    pub map: gridmap::GridMap<FrequencyMapCell>,
 }
 
 impl FrequencyMap {
@@ -105,5 +106,25 @@ impl FrequencyMap {
                 }
             }
         }
+    }
+
+    pub fn compute_occupancy_map(&self) -> FloatMap {
+        let default_cell = -1.0f32;
+        let mut map = gridmap::GridMap::new(
+            self.map.size,
+            self.map.resolution,
+            self.map.offset,
+            default_cell,
+        );
+
+        for (hits_misses, occupancy) in zip(self.map.cells(), map.cells_mut()) {
+            if hits_misses.misses > 0 {
+                *occupancy = hits_misses.hits as f32 / hits_misses.misses as f32;
+            } else {
+                *occupancy = default_cell;
+            }
+        }
+
+        FloatMap { map }
     }
 }

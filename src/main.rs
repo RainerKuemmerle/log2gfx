@@ -3,8 +3,8 @@ extern crate nalgebra as na;
 mod datastream;
 use datastream::{parser::Parser, parser_carmen::CarmenFile};
 mod rendering;
-use rendering::map_creator::{self, MapCreator};
-use rendering::map_creator_parameter::{self, MapCreatorParameter};
+use rendering::map_creator::MapCreator;
+use rendering::map_creator_parameter::MapCreatorParameter;
 
 fn main() {
     let carmen_file = CarmenFile {
@@ -23,4 +23,8 @@ fn main() {
 
     map_creator.allocate_map();
     map_creator.integrate_scans(&data);
+
+    let fmap = map_creator.fmap.as_ref().unwrap();
+    let occupancy_map = fmap.compute_occupancy_map();
+    let result = occupancy_map.save_as_ppm("/tmp/log2gfx.ppm");
 }

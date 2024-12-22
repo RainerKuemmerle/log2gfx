@@ -49,7 +49,7 @@ impl MapCreator {
 
     pub fn integrate_scans(&mut self, scans: &Vec<RobotLaser>) {
         if self.fmap.is_none() {
-            panic!("Called integrate_scans with an allocated map");
+            panic!("Called integrate_scans without an allocated map");
         }
 
         let map = self.fmap.as_mut().unwrap();

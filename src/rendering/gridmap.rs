@@ -23,6 +23,14 @@ impl<T: Copy> GridMap<T> {
         }
     }
 
+    pub fn cells(&self) -> impl Iterator<Item = &T> {
+        self.grid.iter()
+    }
+
+    pub fn cells_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.grid.iter_mut()
+    }
+
     pub fn cell_scalar(&mut self, x: i32, y: i32) -> Option<&mut T> {
         if !self.is_inside_scalar(x, y) {
             None
