@@ -56,7 +56,7 @@ impl FrequencyMap {
             let end = self.map.world2map(&beam_end_point.coords);
 
             let line = bresenham(start.x, start.y, end.x, end.y);
-            for point in line.iter() {
+            for point in line {
                 match self.map.cell_mut(point[0], point[1]) {
                     Some(c) => c.misses += gain.unwrap_or(1),
                     None => continue,
