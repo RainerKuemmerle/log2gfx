@@ -19,7 +19,10 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-fn read_robotlaser(line: &str) -> robot_data::RobotLaser {
+fn read_robotlaser(line: &str) -> Option<robot_data::RobotLaser> {
+    if !line.starts_with("ROBOTLASER") {
+        return None;
+    }
     let mut tokens = line.split_whitespace();
     let _tag = tokens.next().unwrap();
     let _laser_type: i32 = tokens.next().unwrap().parse().unwrap();
@@ -59,20 +62,21 @@ fn read_robotlaser(line: &str) -> robot_data::RobotLaser {
     let laser_params =
         robot_data::LaserParameters::new(laser_pose_relative, angle, angular_step, max_range);
 
-    robot_data::RobotLaser::new(laser_params, robot_pose_global, ranges)
+    Some(robot_data::RobotLaser::new(
+        laser_params,
+        robot_pose_global,
+        ranges,
+    ))
 }
 
 impl parser::Parser for CarmenFile {
     fn parse(&self) -> Vec<robot_data::RobotLaser> {
-        let mut laser_readings = Vec::new();
-        if let Ok(lines) = read_lines(&self.filename) {
-            for line in lines.map_while(Result::ok) {
-                if !line.starts_with("ROBOTLASER") {
-                    continue;
-                }
-                laser_readings.push(read_robotlaser(&line));
-            }
+        match read_lines(&self.filename) {
+            Ok(lines) => lines
+                .map_while(Result::ok)
+                .filter_map(|l| read_robotlaser(&l))
+                .collect(),
+            Err(_) => Vec::new(),
         }
-        laser_readings
     }
 }
