@@ -50,5 +50,10 @@ fn main() {
     let fmap = map_creator.fmap.as_ref().unwrap();
     let occupancy_map = fmap.compute_occupancy_map();
 
-    let _result = occupancy_map.save_as_ppm(&cli.output);
+    if cli.output.ends_with("ppm") {
+        let _result = occupancy_map.save_as_ppm(&cli.output);
+    } else {
+        let img = occupancy_map.to_image();
+        let _result = img.save(cli.output);
+    }
 }
