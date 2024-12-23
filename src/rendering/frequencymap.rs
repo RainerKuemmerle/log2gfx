@@ -81,12 +81,10 @@ impl FrequencyMap {
             default_cell,
         );
 
-        for (hits_misses, occupancy) in zip(self.map.cells(), map.cells_mut()) {
-            if hits_misses.misses > 0 {
-                *occupancy = hits_misses.hits as f32 / hits_misses.misses as f32;
-            } else {
-                *occupancy = default_cell;
-            }
+        for (hits_misses, occupancy) in
+            zip(self.map.cells(), map.cells_mut()).filter(|x| x.0.misses > 0)
+        {
+            *occupancy = hits_misses.hits as f32 / hits_misses.misses as f32;
         }
 
         FloatMap { map }
