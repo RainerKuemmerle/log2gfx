@@ -1,13 +1,9 @@
 pub struct Bresenham {
-    end_x: i32,
-    end_y: i32,
-    dx: i32,
-    dy: i32,
-    sx: i32,
-    sy: i32,
+    end: [i32; 2],
+    delta: [i32; 2],
+    step: [i32; 2],
     error: i32,
-    current_x: i32,
-    current_y: i32,
+    current: [i32; 2],
     consumed: bool,
 }
 
@@ -17,18 +13,18 @@ impl Iterator for Bresenham {
         if self.consumed {
             return None;
         }
-        let result = [self.current_x, self.current_y];
-        if self.current_x == self.end_x && self.current_y == self.end_y {
+        let result = self.current;
+        if self.current == self.end {
             self.consumed = true;
         } else {
             let error2 = self.error;
-            if error2 > -self.dx {
-                self.error -= self.dy;
-                self.current_x += self.sx;
+            if error2 > -self.delta[0] {
+                self.error -= self.delta[1];
+                self.current[0] += self.step[0];
             }
-            if error2 < self.dy {
-                self.error += self.dx;
-                self.current_y += self.sy;
+            if error2 < self.delta[1] {
+                self.error += self.delta[0];
+                self.current[1] += self.step[1];
             }
         }
         Some(result)
@@ -39,15 +35,11 @@ pub fn bresenham(x1: i32, y1: i32, x2: i32, y2: i32) -> Bresenham {
     let dx = (x2 - x1).abs();
     let dy = (y2 - y1).abs();
     Bresenham {
-        end_x: x2,
-        end_y: y2,
-        dx,
-        dy,
-        sx: if x1 < x2 { 1 } else { -1 },
-        sy: if y1 < y2 { 1 } else { -1 },
+        end: [x2, y2],
+        delta: [dx, dy],
+        step: [if x1 < x2 { 1 } else { -1 }, if y1 < y2 { 1 } else { -1 }],
         error: (if dx > dy { dx } else { -dy }) / 2,
-        current_x: x1,
-        current_y: y1,
+        current: [x1, y1],
         consumed: false,
     }
 }
