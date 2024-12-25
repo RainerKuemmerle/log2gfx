@@ -1,5 +1,6 @@
 extern crate nalgebra as na;
 
+#[derive(Debug, Clone, Copy)]
 pub struct MapCreatorParameter {
     ///< the max range of the laser scanner data
     pub max_range: f64,
@@ -17,8 +18,8 @@ pub struct MapCreatorParameter {
     pub verbose: bool,
 }
 
-impl MapCreatorParameter {
-    pub fn default() -> Self {
+impl Default for MapCreatorParameter {
+    fn default() -> Self {
         Self {
             max_range: 20.,
             max_usable_range: 20.,

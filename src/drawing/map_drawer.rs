@@ -1,3 +1,5 @@
+extern crate nalgebra as na;
+
 use crate::datastream::robot_data::RobotLaser;
 use image::RgbaImage;
 
@@ -65,6 +67,50 @@ impl MapDrawer {
         let stroke = tiny_skia::Stroke::default();
         // stroke.width = 2.0;
         // stroke.line_cap = tiny_skia::LineCap::Round;
+
+        self.img.stroke_path(
+            &path,
+            &paint,
+            &stroke,
+            tiny_skia::Transform::identity(),
+            None,
+        );
+    }
+
+    pub fn draw_scan(&mut self, scan: &RobotLaser, max_usable_range: Option<f64>) {
+        let usable_range = scan
+            .laser_params
+            .max_range
+            .min(max_usable_range.unwrap_or(f64::INFINITY)) as f32;
+
+        let laser_pose = scan.odom_pose * scan.laser_params.laser_pose;
+        let path = {
+            let mut pb = tiny_skia::PathBuilder::new();
+            for (i, r) in scan
+                .ranges
+                .iter()
+                .enumerate()
+                .filter(|&x| *x.1 < usable_range)
+            {
+                let coords =
+                    self.world2map([scan.odom_pose.translation.x, scan.odom_pose.translation.y]);
+                pb.move_to(coords[0], coords[1]);
+                let beam = laser_pose
+                    * scan.laser_params.beam_isometry(i)
+                    * na::Point2::new(*r as f64, 0.);
+                let coords = self.world2map([beam.x, beam.y]);
+                pb.line_to(coords[0], coords[1]);
+            }
+            pb.finish().unwrap()
+        };
+
+        let mut paint = tiny_skia::Paint {
+            anti_alias: true,
+            ..Default::default()
+        };
+        paint.set_color_rgba8(242, 213, 207, 100);
+
+        let stroke = tiny_skia::Stroke::default();
 
         self.img.stroke_path(
             &path,
