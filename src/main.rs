@@ -23,9 +23,16 @@ struct Cli {
     #[arg(short, long)]
     verbose: bool,
 
+    #[arg(short, long)]
+    resolution: f64,
+
     /// Draw the path of the robot
     #[arg(long)]
     draw_path: bool,
+
+    /// Highlight scans in the map
+    #[arg(long)]
+    scan: Vec<usize>,
 }
 
 fn to_map_drawer(map_creator: MapCreator) -> MapDrawer {
@@ -47,8 +54,11 @@ fn to_map_drawer(map_creator: MapCreator) -> MapDrawer {
 fn main() {
     let cli = Cli::parse();
 
-    let mut map_creator_parameter = MapCreatorParameter::default();
-    map_creator_parameter.verbose = cli.verbose;
+    let map_creator_parameter = MapCreatorParameter {
+        verbose: cli.verbose,
+        resolution: cli.resolution,
+        ..Default::default()
+    };
 
     let carmen_file = CarmenFile {
         filename: cli.input,
@@ -59,7 +69,8 @@ fn main() {
     }
 
     let mut map_drawer = {
-        let mut map_creator = MapCreator::new(map_creator_parameter);
+        let mapper_params = map_creator_parameter;
+        let mut map_creator = MapCreator::new(mapper_params);
 
         map_creator.update_boundaries(&data);
         map_creator.allocate_map();
@@ -72,6 +83,21 @@ fn main() {
             print!("Drawing the path ... ");
         }
         map_drawer.draw_path(&data);
+        if cli.verbose {
+            println!("done.")
+        }
+    }
+
+    if !cli.scan.is_empty() {
+        if cli.verbose {
+            print!("Drawing scans ... ");
+        }
+        for idx in cli.scan.iter().filter(|&x| *x < data.len()) {
+            if cli.verbose {
+                print!("{} ", idx);
+            }
+            map_drawer.draw_scan(&data[*idx], Some(map_creator_parameter.max_usable_range));
+        }
         if cli.verbose {
             println!("done.")
         }
