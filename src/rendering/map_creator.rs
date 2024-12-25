@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use core::f64;
+use std::io::Write;
 
 use crate::datastream::robot_data::RobotLaser;
 
@@ -56,6 +56,7 @@ impl MapCreator {
 
         if self.parameter.verbose {
             print!("Integrating scans ... ");
+            let _ = std::io::stdout().flush();
         }
         for rl in scans.iter() {
             let my_max_range = self.parameter.max_range.min(rl.laser_params.max_range);
@@ -80,7 +81,7 @@ impl MapCreator {
     pub fn allocate_map(&mut self) {
         if self.parameter.verbose {
             println!(
-                "Boundaries: {} {} -> {} {}",
+                "Boundaries: {:.3} {:.3} -> {:.3} {:.3}",
                 self.boundaries_min.x,
                 self.boundaries_min.y,
                 self.boundaries_max.x,
@@ -92,7 +93,7 @@ impl MapCreator {
         let boundaries_max = self.boundaries_max + border;
         if self.parameter.verbose {
             println!(
-                "Extended Boundaries: {} {} -> {} {}",
+                "Extended Boundaries: {:.3} {:.3} -> {:.3} {:.3}",
                 boundaries_min.x, boundaries_min.y, boundaries_max.x, boundaries_max.y
             );
         }
