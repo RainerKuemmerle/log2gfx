@@ -41,16 +41,17 @@ impl FrequencyMap {
 
         let laser_pose = robot_pose * laser.laser_params.laser_pose;
         let start = self.map.world2map(&laser_pose.translation.vector);
-        for (i, range) in laser.ranges.iter().enumerate() {
-            if *range > my_max_range {
-                continue;
-            }
-            let mut r = *range;
-            let mut cropped = false;
-            if r > my_usable_range {
-                r = my_usable_range;
-                cropped = true;
-            }
+        for (i, range) in laser
+            .ranges
+            .iter()
+            .enumerate()
+            .filter(|&x| *x.1 < my_max_range)
+        {
+            let (r, cropped) = if *range > my_usable_range {
+                (my_usable_range, true)
+            } else {
+                (*range, false)
+            };
             let beam = na::Point2::new(r as f64, 0.);
             let beam_end_point = laser_pose * laser.laser_params.beam_isometry(i) * beam;
             let end = self.map.world2map(&beam_end_point.coords);

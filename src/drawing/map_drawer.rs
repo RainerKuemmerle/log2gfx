@@ -1,18 +1,20 @@
 extern crate nalgebra as na;
 
-use crate::datastream::robot_data::RobotLaser;
+use crate::{
+    datastream::robot_data::RobotLaser, rendering::map_creator_parameter::MapCreatorParameter,
+};
 use image::RgbaImage;
 
 pub struct MapDrawer {
-    pub resolution: f64,
+    pub parameter: MapCreatorParameter,
     pub offset: [f64; 2],
     pub img: tiny_skia::Pixmap,
 }
 
 impl MapDrawer {
-    pub fn new(resolution: f64, offset: [f64; 2], img: tiny_skia::Pixmap) -> Self {
+    pub fn new(parameter: MapCreatorParameter, offset: [f64; 2], img: tiny_skia::Pixmap) -> Self {
         Self {
-            resolution,
+            parameter,
             offset,
             img,
         }
@@ -35,8 +37,8 @@ impl MapDrawer {
 
     fn world2map(&self, wp: [f64; 2]) -> [f32; 2] {
         let map_point = [
-            (wp[0] - self.offset[0]) / self.resolution,
-            self.img.height() as f64 - (wp[1] - self.offset[1]) / self.resolution,
+            (wp[0] - self.offset[0]) / self.parameter.resolution,
+            self.img.height() as f64 - (wp[1] - self.offset[1]) / self.parameter.resolution,
         ];
         map_point.map(|c| c as f32)
     }
@@ -52,13 +54,12 @@ impl MapDrawer {
 
         let path = {
             let mut pb = tiny_skia::PathBuilder::new();
-            let coords = self.world2map([
-                scans[0].odom_pose.translation.x,
-                scans[0].odom_pose.translation.y,
-            ]);
+            let pose = self.parameter.offset * scans[0].odom_pose;
+            let coords = self.world2map([pose.translation.x, pose.translation.y]);
             pb.move_to(coords[0], coords[1]);
             for s in scans.iter().skip(1) {
-                let coords = self.world2map([s.odom_pose.translation.x, s.odom_pose.translation.y]);
+                let pose = self.parameter.offset * s.odom_pose;
+                let coords = self.world2map([pose.translation.x, pose.translation.y]);
                 pb.line_to(coords[0], coords[1]);
             }
             pb.finish().unwrap()
@@ -83,7 +84,8 @@ impl MapDrawer {
             .max_range
             .min(max_usable_range.unwrap_or(f64::INFINITY)) as f32;
 
-        let laser_pose = scan.odom_pose * scan.laser_params.laser_pose;
+        let lpose = self.parameter.offset * scan.odom_pose * scan.laser_params.laser_pose;
+        let lcoords = self.world2map([lpose.translation.x, lpose.translation.y]);
         let path = {
             let mut pb = tiny_skia::PathBuilder::new();
             for (i, r) in scan
@@ -92,12 +94,9 @@ impl MapDrawer {
                 .enumerate()
                 .filter(|&x| *x.1 < usable_range)
             {
-                let coords =
-                    self.world2map([scan.odom_pose.translation.x, scan.odom_pose.translation.y]);
-                pb.move_to(coords[0], coords[1]);
-                let beam = laser_pose
-                    * scan.laser_params.beam_isometry(i)
-                    * na::Point2::new(*r as f64, 0.);
+                pb.move_to(lcoords[0], lcoords[1]);
+                let beam =
+                    lpose * scan.laser_params.beam_isometry(i) * na::Point2::new(*r as f64, 0.);
                 let coords = self.world2map([beam.x, beam.y]);
                 pb.line_to(coords[0], coords[1]);
             }
