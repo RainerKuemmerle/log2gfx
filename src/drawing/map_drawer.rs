@@ -65,9 +65,10 @@ impl MapDrawer {
             pb.finish().unwrap()
         };
 
-        let stroke = tiny_skia::Stroke::default();
-        // stroke.width = 2.0;
-        // stroke.line_cap = tiny_skia::LineCap::Round;
+        let stroke = tiny_skia::Stroke {
+            width: (self.parameter.path_width / self.parameter.resolution) as f32,
+            ..Default::default()
+        };
 
         self.img.stroke_path(
             &path,
