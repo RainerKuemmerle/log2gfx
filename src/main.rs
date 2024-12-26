@@ -36,6 +36,10 @@ struct Cli {
     #[arg(long)]
     draw_path: bool,
 
+    /// Width for drawing the path of the robot
+    #[arg(long, default_value_t = 0.2)]
+    path_width: f64,
+
     /// Highlight scans in the map
     #[arg(long, num_args = 1..)]
     scan: Vec<usize>,
@@ -103,6 +107,7 @@ fn main() {
         offset,
         border: cli.border,
         zero_first_pose: cli.zero_first,
+        path_width: cli.path_width,
         max_range: cli.max_range,
         max_usable_range: cli.max_usable_range,
     };

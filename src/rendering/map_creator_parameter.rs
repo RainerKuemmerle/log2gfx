@@ -12,6 +12,8 @@ pub struct MapCreatorParameter {
     pub offset: na::Isometry2<f64>,
     ///< border around the map which is set to unknown
     pub border: f64,
+    ///< border around the map which is set to unknown
+    pub path_width: f64,
     ///< set the first pose of the map automatically to zero
     pub zero_first_pose: bool,
     ///< print some verbose information while creating the map
@@ -26,6 +28,7 @@ impl Default for MapCreatorParameter {
             resolution: 0.1,
             offset: na::Isometry2::identity(),
             border: 2.0,
+            path_width: 0.2,
             zero_first_pose: false,
             verbose: false,
         }
