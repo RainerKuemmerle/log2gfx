@@ -40,9 +40,25 @@ struct Cli {
     #[arg(long, num_args = 1..)]
     scan: Vec<usize>,
 
-    /// Offset for the map in [m, m, rad]
-    #[arg(long, num_args = 3)]
+    /// Offset for the map in [m, m, deg]
+    #[arg(long, num_args = 3, allow_negative_numbers = true)]
     offset: Vec<f64>,
+
+    /// Max range of the scans to integrate
+    #[arg(long, default_value_t = 20.)]
+    max_range: f64,
+
+    /// Max usable range of the scans to integrate
+    #[arg(long, default_value_t = 20.)]
+    max_usable_range: f64,
+
+    /// Border around the map
+    #[arg(long, default_value_t = 2.)]
+    border: f64,
+
+    /// Zero the first pose of the trajectory
+    #[arg(long)]
+    zero_first: bool,
 }
 
 fn compute_length(scans: &[RobotLaser]) -> f64 {
@@ -75,7 +91,7 @@ fn main() {
     let offset = if !cli.offset.is_empty() {
         na::Isometry2::new(
             na::Vector2::new(cli.offset[0], cli.offset[1]),
-            cli.offset[2],
+            cli.offset[2].to_radians(),
         )
     } else {
         na::Isometry2::identity()
@@ -85,7 +101,10 @@ fn main() {
         verbose: cli.verbose,
         resolution: cli.resolution,
         offset,
-        ..Default::default()
+        border: cli.border,
+        zero_first_pose: cli.zero_first,
+        max_range: cli.max_range,
+        max_usable_range: cli.max_usable_range,
     };
 
     let carmen_file = CarmenFile {
