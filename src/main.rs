@@ -69,6 +69,7 @@ enum Command {
         #[arg(long)]
         draw_path: bool,
         /// Output filename
+        #[arg(long, default_value = "log2gfx.png")]
         output: PathBuf,
     },
     /// Perform animation of several images
@@ -185,6 +186,9 @@ fn main() {
                 if cli.verbose {
                     println!("done.")
                 }
+            }
+            if cli.verbose {
+                println!("Saving {}", output.to_string_lossy());
             }
             let _result = map_drawer.to_image().save(output);
         }
