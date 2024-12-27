@@ -1,5 +1,7 @@
 extern crate nalgebra as na;
 
+use std::path::PathBuf;
+
 use crate::{
     datastream::robot_data::RobotLaser, rendering::map_creator_parameter::MapCreatorParameter,
 };
@@ -9,6 +11,7 @@ pub struct MapDrawer {
     pub parameter: MapCreatorParameter,
     pub offset: [f64; 2],
     pub img: tiny_skia::Pixmap,
+    backup: Option<Vec<u8>>,
 }
 
 impl MapDrawer {
@@ -17,7 +20,24 @@ impl MapDrawer {
             parameter,
             offset,
             img,
+            backup: None,
         }
+    }
+
+    pub fn has_backup(&self) -> bool {
+        self.backup.is_some()
+    }
+
+    pub fn backup(&mut self) {
+        self.backup = Some(self.img.data().to_vec());
+    }
+
+    pub fn restore_from_backup(&mut self) {
+        match &self.backup {
+            Some(b) => self.img.data_mut().copy_from_slice(b),
+            None => panic!("No backup"),
+        }
+        self.backup = None;
     }
 
     pub fn to_image(&self) -> RgbaImage {
@@ -44,7 +64,7 @@ impl MapDrawer {
     }
 
     pub fn draw_path(&mut self, scans: &[RobotLaser]) {
-        if scans.is_empty() {
+        if scans.len() < 2 {
             return;
         }
 
@@ -79,11 +99,11 @@ impl MapDrawer {
         );
     }
 
-    pub fn draw_scan(&mut self, scan: &RobotLaser, max_usable_range: Option<f64>) {
+    pub fn draw_scan(&mut self, scan: &RobotLaser) {
         let usable_range = scan
             .laser_params
             .max_range
-            .min(max_usable_range.unwrap_or(f64::INFINITY)) as f32;
+            .min(self.parameter.max_usable_range) as f32;
 
         let lpose = self.parameter.offset * scan.odom_pose * scan.laser_params.laser_pose;
         let lcoords = self.world2map([lpose.translation.x, lpose.translation.y]);
@@ -119,5 +139,54 @@ impl MapDrawer {
             tiny_skia::Transform::identity(),
             None,
         );
+    }
+
+    pub fn animate_scans(
+        &mut self,
+        scans: &[RobotLaser],
+        output_folder: &PathBuf,
+        start: i32,
+        end: i32,
+        draw_path: bool,
+    ) {
+        let s = if start < 0 { 0 } else { start } as usize;
+        let e = if end < 0 { scans.len() } else { end as usize };
+        let width = (e - s).ilog10() as usize + 1;
+
+        for (i, scan) in scans[s..e].iter().enumerate() {
+            self.backup();
+
+            let image_name = PathBuf::from(format!("image_{:0width$}.png", i, width = width));
+            let filename: PathBuf = [output_folder, &image_name].iter().collect();
+
+            println!("Animate {} -> {}", s + i, filename.to_string_lossy());
+            if draw_path {
+                self.draw_path(&scans[s..=s + i]);
+            }
+            self.draw_scan(scan);
+
+            let _result = self.to_image().save(filename);
+
+            assert!(self.has_backup());
+            self.restore_from_backup();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn backup() {
+        let params = MapCreatorParameter::default();
+        let offset = [0., 0.];
+        let pixmap = tiny_skia::Pixmap::new(10, 10).unwrap();
+        let mut drawer = MapDrawer::new(params, offset, pixmap);
+        assert!(!drawer.has_backup());
+        drawer.backup();
+        assert!(drawer.has_backup());
+        drawer.restore_from_backup();
+        assert!(!drawer.has_backup());
     }
 }
