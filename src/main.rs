@@ -5,6 +5,7 @@ use std::iter::zip;
 use std::path::PathBuf;
 
 use clap::Parser as ClapParser;
+use clap::Subcommand as ClapSubCommand;
 
 mod datastream;
 use datastream::robot_data::RobotLaser;
@@ -18,12 +19,6 @@ use drawing::map_drawer::MapDrawer;
 #[derive(ClapParser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    /// Input logfile for rendering
-    input: PathBuf,
-
-    /// Output filename
-    output: PathBuf,
-
     /// Turn verbose logging on
     #[arg(short, long)]
     verbose: bool,
@@ -32,17 +27,9 @@ struct Cli {
     #[arg(short, long, default_value_t = 0.1)]
     resolution: f64,
 
-    /// Draw the path of the robot
-    #[arg(long)]
-    draw_path: bool,
-
     /// Width for drawing the path of the robot
     #[arg(long, default_value_t = 0.2)]
     path_width: f64,
-
-    /// Highlight scans in the map
-    #[arg(long, num_args = 1..)]
-    scan: Vec<usize>,
 
     /// Offset for the map in [m, m, deg]
     #[arg(long, num_args = 3, allow_negative_numbers = true)]
@@ -63,6 +50,42 @@ struct Cli {
     /// Zero the first pose of the trajectory
     #[arg(long)]
     zero_first: bool,
+
+    #[command(subcommand)]
+    command: Command,
+
+    /// Input logfile for rendering
+    input: PathBuf,
+}
+
+#[derive(ClapSubCommand)]
+enum Command {
+    /// Render a single map image
+    Render {
+        /// Highlight scans in the map
+        #[arg(long, num_args = 1..)]
+        scan: Vec<usize>,
+        /// Draw the path of the robot
+        #[arg(long)]
+        draw_path: bool,
+        /// Output filename
+        output: PathBuf,
+    },
+    /// Perform animation of several images
+    AnimateScans {
+        /// Start index of scans for animation
+        #[arg(long, default_value_t = -1)]
+        start: i32,
+        /// End index of scans for animation
+        #[arg(long, default_value_t = -1)]
+        end: i32,
+        /// Draw the path of the robot
+        #[arg(long)]
+        draw_path: bool,
+        /// Output path
+        #[arg(long, default_value = ".")]
+        output: PathBuf,
+    },
 }
 
 fn compute_length(scans: &[RobotLaser]) -> f64 {
@@ -130,33 +153,46 @@ fn main() {
         to_map_drawer(map_creator)
     };
 
-    if cli.draw_path {
-        if cli.verbose {
-            print!("Drawing the path ... ");
-            let _ = std::io::stdout().flush();
-        }
-        map_drawer.draw_path(&data);
-        if cli.verbose {
-            println!("done.")
-        }
-    }
-
-    if !cli.scan.is_empty() {
-        if cli.verbose {
-            print!("Drawing scans ... ");
-            let _ = std::io::stdout().flush();
-        }
-        for idx in cli.scan.iter().filter(|&x| *x < data.len()) {
-            if cli.verbose {
-                print!("{} ", idx);
-                let _ = std::io::stdout().flush();
+    match &cli.command {
+        Command::Render {
+            scan,
+            draw_path,
+            output,
+        } => {
+            if *draw_path {
+                if cli.verbose {
+                    print!("Drawing the path ... ");
+                    let _ = std::io::stdout().flush();
+                }
+                map_drawer.draw_path(&data);
+                if cli.verbose {
+                    println!("done.")
+                }
             }
-            map_drawer.draw_scan(&data[*idx], Some(map_creator_parameter.max_usable_range));
-        }
-        if cli.verbose {
-            println!("done.")
-        }
-    }
 
-    let _result = map_drawer.to_image().save(cli.output);
+            if !scan.is_empty() {
+                if cli.verbose {
+                    print!("Drawing scans ... ");
+                    let _ = std::io::stdout().flush();
+                }
+                for idx in scan.iter().filter(|&x| *x < data.len()) {
+                    if cli.verbose {
+                        print!("{} ", idx);
+                        let _ = std::io::stdout().flush();
+                    }
+                    map_drawer.draw_scan(&data[*idx]);
+                }
+                if cli.verbose {
+                    println!("done.")
+                }
+            }
+            let _result = map_drawer.to_image().save(output);
+        }
+        Command::AnimateScans {
+            start,
+            end,
+            draw_path,
+            output,
+        } => map_drawer.animate_scans(&data, output, *start, *end, *draw_path),
+    }
 }
